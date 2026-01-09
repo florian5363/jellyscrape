@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+<head>
+    <title>{{ library_name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+<h1>{{ library_name }}</h1>
+
+<div class="grid">
+{% for movie in movies %}
+<div class="card">
+           <img src="{{ movie.get('ImageUrl') }}"> 
+    <div class="card-body">
+
+        <form action="{{ url_for('download_movie', library_name=library_name, movie_id=movie['Id']) }}">
+            <button class="btn">Download</button>
+        </form>
+    </div>
+
+</div>
+{% endfor %}
+</div>
+
+<a href="{{ url_for('libraries') }}">← Back</a>
+</body>
+</html>

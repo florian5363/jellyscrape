@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+<head>
+    <title>Download started</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: #fff;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .box {
+            background: #1c1c1c;
+            border-radius: 10px;
+            padding: 30px 40px;
+            max-width: 700px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.7);
+            text-align: center;
+        }
+        h1 {
+            font-weight: 700;
+            font-size: 28px;
+            margin-bottom: 25px;
+        }
+        p {
+            font-size: 18px;
+            margin: 15px 0;
+        }
+        strong {
+            color: #ff3d3d;
+        }
+        a {
+            display: inline-block;
+            margin-top: 25px;
+            background: #ff3d3d;
+            color: white;
+            padding: 12px 22px;
+            border-radius: 7px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.2s ease;
+        }
+        a:hover {
+            background: #ff1f1f;
+        }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h1>✅ Download started</h1>
+
+    {% if type == "show" %}
+        <p>
+            The download for the show
+            <strong>{{ name }}</strong>
+            has started in the background.
+        </p>
+
+    {% elif type == "season" %}
+        <p>
+            The download for
+            <strong>{{ name }}</strong>
+            has started in the background.
+        </p>
+
+    {% elif type == "episode" %}
+        <p>
+            The episode
+            <strong>{{ name }}</strong>
+            is now downloading in the background.
+        </p>
+    {% endif %}
+
+    <p>You can safely close this page. The download will continue.</p>
+
+    <a href="{{ back_url }}">⬅ Back</a>
+</div>
+
+</body>
+</html>

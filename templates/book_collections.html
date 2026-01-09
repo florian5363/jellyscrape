@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head>
+    <title>{{ library_name }} – Book Collections</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<h1>{{ library_name }} – Book Collections</h1>
+
+<div class="grid">
+    {% for collection in collections %}
+    <div class="card">
+        <a href="{{ url_for('book_collection', library_name=library_name, collection_id=collection['Id']) }}">
+            {% if collection.ImageUrl %}
+                <img src="{{ collection.ImageUrl }}" alt="{{ collection['Name'] }}">
+            {% else %}
+                <div style="height: 280px; background: #333; display: flex; align-items: center; justify-content: center; font-size: 3rem;">
+                    📚
+                </div>
+            {% endif %}
+            <div class="title">{{ collection['Name'] }}</div>
+        </a>
+
+        <div class="card-body">
+            <form action="{{ url_for('download_book_collection', library_name=library_name, collection_id=collection['Id']) }}" method="get">
+                <button class="btn" type="submit">Download Collection</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination Controls -->
+<div class="pagination" style="margin-top: 20px; text-align: center; color: #fff; font-weight: bold;">
+    {% if page > 1 %}
+        <a href="{{ url_for('library', library_name=library_name, page=page-1) }}" class="btn" style="margin-right: 10px;">← Previous</a>
+    {% endif %}
+
+    <span>Page {{ page }} of {{ total_pages }}</span>
+
+    {% if page < total_pages %}
+        <a href="{{ url_for('library', library_name=library_name, page=page+1) }}" class="btn" style="margin-left: 10px;">Next →</a>
+    {% endif %}
+</div>
+
+<br>
+<a href="{{ url_for('libraries') }}">← Back to libraries</a>
+
+</body>
+</html>

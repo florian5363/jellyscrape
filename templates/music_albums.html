@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+<head>
+    <title>{{ library_name }} – Music Albums</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<h1>{{ library_name }} – Music Albums</h1>
+
+<div class="grid">
+    {% for album in albums %}
+    <div class="card">
+        <a href="{{ url_for('album', library_name=library_name, album_id=album['Id']) }}">
+            {% if album.ImageUrl %}
+                <img src="{{ album.ImageUrl }}" alt="{{ album['Name'] }}">
+            {% else %}
+                <div style="height: 280px; background: #333; display: flex; align-items: center; justify-content: center; font-size: 3rem;">
+                    🎵
+                </div>
+            {% endif %}
+            <div class="title">{{ album['Name'] }}</div>
+        </a>
+
+        <div class="card-body">
+            <form action="{{ url_for('download_album', library_name=library_name, album_id=album['Id']) }}" method="get">
+                <button class="btn" type="submit">Download Album</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+
+<br>
+<a href="{{ url_for('libraries') }}">← Back to libraries</a>
+
+</body>
+</html>

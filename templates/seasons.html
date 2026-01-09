@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+<head>
+    <title>{{ show['Name'] }} – Seasons</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+<h1>{{ show['Name'] }} – Seasons</h1>
+
+<div class="grid">
+    {% for season in seasons %}
+    <div class="card">
+        <a href="{{ url_for('season', library_name=library_name, season_id=season['Id']) }}">
+            <img src="{{ season.get('ImageUrl') }}">
+            <div class="title">
+                Season {{ season.get('IndexNumber', '?') }}
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+<a href="{{ url_for('library', library_name=library_name) }}">← Back</a>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+<head>
+    <title>{{ season.get('Name','Episodes') }}</title>
+     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+<h1>{{ season.get('Name','Episodes') }}</h1>
+
+<div class="grid">
+{% for ep in episodes %}
+<div class="card">
+    <img src="{{ ep.get('ImageUrl') }}">
+    <div class="card-body">
+        <div>S{{ ep.get('IndexNumber','?') }} – {{ ep['Name'] }}</div>
+        <br>
+        <form action="{{ url_for('download_episode', library_name=library_name, episode_id=ep['Id']) }}">
+            <button class="btn">Download</button>
+        </form>
+    </div>
+</div>
+{% endfor %}
+</div>
+
+<a href="javascript:history.back()">← Back</a>
+</body>
+</html>

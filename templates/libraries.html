@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+<head>
+    <title>Libraries</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: #fff;
+            padding: 20px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: #1c1c1c;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,.6);
+        }
+        a {
+            color: inherit;
+            text-decoration: none;
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+<h1>Libraries</h1>
+
+<div class="grid">
+    {% for name, lib in libraries.items() %}
+    <div class="card">
+        <a href="{{ url_for('library', library_name=name) }}">
+            {{ name }}
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+</body>
+</html>

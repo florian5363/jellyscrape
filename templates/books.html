@@ -1,0 +1,78 @@
+<!doctype html>
+<html>
+<head>
+    <title>{{ library_name }} – Books</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: #fff;
+            padding: 20px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px,1fr));
+            gap: 20px;
+        }
+        .card {
+            background: #1c1c1c;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,.6);
+        }
+        .card img {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            background: #333;
+        }
+        .card-body {
+            padding: 10px;
+            text-align: center;
+        }
+        .title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .btn {
+            background: #ff3d3d;
+            border: none;
+            padding: 6px 10px;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        a { color: inherit; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<h1>Books in {{ collection_name }}</h1>
+
+
+<div class="grid">
+    {% for book in books %}
+    <div class="card">
+        <!-- Book cover -->
+        <img src="{{ book.ImageUrl or '' }}" alt="{{ book.Name }}">
+
+        <div class="card-body">
+            <div class="title">{{ book.Name }}</div>
+
+            <!-- Example button (you can customize or remove if not needed) -->
+            <form action="#" method="get">
+                <button class="btn" type="submit">
+                    Download Book
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<br>
+<a href="{{ url_for('libraries') }}">← Back to libraries</a>
+
+</body>
+</html>
