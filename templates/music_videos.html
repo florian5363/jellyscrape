@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+    <title>{{ folder['Name'] }} – Music Videos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<h1>{{ folder['Name'] }}</h1>
+
+<div class="grid">
+    {% for video in videos %}
+    <div class="card">
+        {% if video.ImageUrl %}
+            <img src="{{ video.ImageUrl }}" alt="{{ video['Name'] }}">
+        {% else %}
+            <div class="placeholder">🎬</div>
+        {% endif %}
+        <div class="title">{{ video['Name'] }}</div>
+
+        <div class="card-body">
+            <form action="{{ url_for('download_music_video', library_name=library_name, video_id=video['Id']) }}" method="get">
+                <button class="btn" type="submit">Download Video</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div> <!-- close grid here -->
+
+<!-- Pagination controls OUTSIDE the grid -->
+<div class="pagination" style="margin: 20px auto; text-align: center; color: #fff; font-weight: bold; max-width: 300px;">
+    {% if page > 1 %}
+        <a href="{{ url_for('music_video_folder', library_name=library_name, folder_id=folder['Id'], page=page-1) }}" class="btn">← Previous</a>
+    {% endif %}
+
+    <span style="margin: 0 10px;">Page {{ page }} of {{ total_pages }}</span>
+
+    {% if page < total_pages %}
+        <a href="{{ url_for('music_video_folder', library_name=library_name, folder_id=folder['Id'], page=page+1) }}" class="btn">Next →</a>
+    {% endif %}
+</div>
+
+<a href="{{ url_for('library', library_name=library_name) }}">← Back</a>
+
+</body>
+</html>

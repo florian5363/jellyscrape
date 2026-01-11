@@ -49,6 +49,10 @@ def organize_items(items):
             shows[item["Id"]] = item
 
     for item in items:
+            if item.get("Type") == "Series":
+                shows[item["Id"]] = item
+
+    for item in items:
         if item.get("Type") == "Season":
             #if item.get("IndexNumber", 0) == 0:
             #    continue
@@ -94,9 +98,13 @@ def organize_items(items):
 
 @app.route("/")
 def libraries():
+    filtered_libraries = {
+        name: lib for name, lib in LIBRARIES.items()
+        if lib.get("CollectionType") != "playlists"
+    }
     return render_template(
         "libraries.html",
-        libraries=LIBRARIES
+        libraries=filtered_libraries
     )
 
 
@@ -217,6 +225,42 @@ def library(library_name):
             albums=albums_with_images
         )
 
+    elif collection_type == "musicvideos":
+        page = int(request.args.get("page", 1))
+        per_page = 100
+
+        folders = [i for i in items if i.get("Type") == "Folder"]
+
+        total = len(folders)
+        total_pages = (total + per_page - 1) // per_page
+
+        start = (page - 1) * per_page
+        end = start + per_page
+        folders_page = folders[start:end]
+
+        folders_with_images = []
+        for folder in folders_page:
+            folder_copy = dict(folder)
+
+            image_tag = folder.get("ImageTags", {}).get("Primary")
+            if image_tag:
+                folder_copy["ImageUrl"] = (
+                    f"{BASE_URL}/Items/{folder['Id']}/Images/Primary"
+                    f"?tag={image_tag}&api_key={API_KEY}"
+                )
+            else:
+                folder_copy["ImageUrl"] = None
+
+            folders_with_images.append(folder_copy)
+
+        return render_template(
+            "music_video_folders.html",
+            library_name=library_name,
+            folders=folders_with_images,
+            page=page,
+            total_pages=total_pages
+        )
+
 
 
 
@@ -282,6 +326,82 @@ def book_collection(library_name, collection_id):
 
 
 
+@app.route("/music-videos/<library_name>/<folder_id>")
+def music_video_folder(library_name, folder_id):
+    library = LIBRARIES.get(library_name)
+    if not library:
+        abort(404)
+
+    items = library["Items"]
+
+    folder = next(
+        (i for i in items if i.get("Id") == folder_id and i.get("Type") == "Folder"),
+        None
+    )
+    if not folder:
+        abort(404)
+
+    videos = [
+        i for i in items
+        if i.get("Type") in ("MusicVideo", "Video")
+        and i.get("ParentId") == folder_id
+    ]
+
+    # Pagination setup
+    page = int(request.args.get("page", 1))
+    per_page = 100
+    total = len(videos)
+    total_pages = (total + per_page - 1) // per_page
+
+    start = (page - 1) * per_page
+    end = start + per_page
+    videos_page = videos[start:end]
+
+    videos_with_images = []
+    for video in videos_page:
+        video_copy = dict(video)
+        tag = video.get("ImageTags", {}).get("Primary")
+        if tag:
+            video_copy["ImageUrl"] = (
+                f"{BASE_URL}/Items/{video['Id']}/Images/Primary"
+                f"?tag={tag}&api_key={API_KEY}"
+            )
+        else:
+            video_copy["ImageUrl"] = None
+        videos_with_images.append(video_copy)
+
+    return render_template(
+        "music_videos.html",
+        library_name=library_name,
+        folder=folder,
+        videos=videos_with_images,
+        page=page,
+        total_pages=total_pages
+    )
+
+
+
+@app.route("/music-video/<library_name>/<video_id>")
+def music_video(library_name, video_id):
+    library = LIBRARIES.get(library_name)
+    if not library:
+        abort(404)
+
+    items = library["Items"]
+    video = next(
+        (v for v in items if v.get("Id") == video_id and v.get("Type") == "MusicVideo"),
+        None
+    )
+    if not video:
+        abort(404)
+
+    return render_template(
+        "music_video.html",
+        library_name=library_name,
+        video=video
+    )
+
+
 
 @app.route("/show/<library_name>/<show_id>")
 def show(library_name, show_id):
@@ -326,6 +446,30 @@ def show(library_name, show_id):
         show=show_obj,
         seasons=seasons_with_images
     )
+
+@app.route("/download/music-video/<library_name>/<video_id>")
+def download_music_video(library_name, video_id):
+    library = LIBRARIES.get(library_name)
+    if not library:
+        abort(404)
+
+    video = next(
+        (v for v in library["Items"] if v.get("Id") == video_id),
+        None
+    )
+    if not video:
+        abort(404)
+
+    download_episode_background(video)  # or your generic download function
+
+    return render_template(
+        "download_started.html",
+        type="music video",
+        name=video["Name"],
+        back_url=url_for("library", library_name=library_name)
+    )
+
+
 
 @app.route("/download/album/<library_name>/<album_id>")
 def download_album(library_name, album_id):

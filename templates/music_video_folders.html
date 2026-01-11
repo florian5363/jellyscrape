@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+<head>
+    <title>{{ library_name }} – Music Videos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<h1>{{ library_name }} – Music Videos</h1>
+
+<div class="grid">
+    {% for folder in folders %}
+    <div class="card">
+        <a href="{{ url_for('music_video_folder', library_name=library_name, folder_id=folder['Id']) }}">
+            {% if folder.ImageUrl %}
+                <img src="{{ folder.ImageUrl }}" alt="{{ folder['Name'] }}">
+            {% else %}
+                <div class="placeholder">🎬</div>
+            {% endif %}
+            <div class="title">{{ folder['Name'] }}</div>
+        </a>
+
+        <div class="card-body">
+            <form action="{{ url_for('download_music_video', library_name=library_name, video_id=folder['Id']) }}" method="get">
+                <button class="btn" type="submit">Download Folder</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<br>
+<a href="{{ url_for('libraries') }}">← Back to libraries</a>
+
+</body>
+</html>
