@@ -15,7 +15,7 @@
     <div class="card-body">
         <div>S{{ ep.get('IndexNumber','?') }} – {{ ep['Name'] }}</div>
         <br>
-        <form action="{{ url_for('download_episode', library_name=library_name, episode_id=ep['Id']) }}">
+        <form action="{{ url_for('download_single', library_name=library_name, single_id=ep['Id']) }}">
             <button class="btn">Download</button>
         </form>
     </div>
@@ -23,6 +23,9 @@
 {% endfor %}
 </div>
 
+
 <a href="javascript:history.back()">← Back</a>
+
 </body>
 </html>
+

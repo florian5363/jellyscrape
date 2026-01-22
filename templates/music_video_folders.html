@@ -21,7 +21,7 @@
         </a>
 
         <div class="card-body">
-            <form action="{{ url_for('download_music_video', library_name=library_name, video_id=folder['Id']) }}" method="get">
+            <form action="{{ url_for('download_zip', library_name=library_name, mul_id=folder['Id']) }}" method="get">
                 <button class="btn" type="submit">Download Folder</button>
             </form>
         </div>

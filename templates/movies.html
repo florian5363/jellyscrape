@@ -13,8 +13,9 @@
 <div class="card">
            <img src="{{ movie.get('ImageUrl') }}"> 
     <div class="card-body">
-
-        <form action="{{ url_for('download_movie', library_name=library_name, movie_id=movie['Id']) }}">
+        <div>{{ movie['Name'] }}</div>
+        <br>
+        <form action="{{ url_for('download_single', library_name=library_name, single_id=movie['Id']) }}">
             <button class="btn">Download</button>
         </form>
     </div>

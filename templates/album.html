@@ -91,7 +91,7 @@
         {% for song in songs %}
         <li>
             <span>{{ loop.index }}. {{ song['Name'] }}</span>
-            <form action="{{ url_for('download_song', library_name=library_name, song_id=song['Id']) }}" method="get" style="margin:0;">
+            <form action="{{ url_for('download_single', library_name=library_name, single_id=song['Id']) }}" method="get" style="margin:0;">
                 <button class="btn-download" type="submit">Download</button>
             </form>
         </li>

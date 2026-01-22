@@ -61,11 +61,9 @@
             <div class="title">{{ book.Name }}</div>
 
             <!-- Example button (you can customize or remove if not needed) -->
-            <form action="#" method="get">
-                <button class="btn" type="submit">
-                    Download Book
-                </button>
-            </form>
+        <form action="{{ url_for('download_single', library_name=library_name, single_id=book['Id']) }}">
+            <button class="btn">Download</button>
+        </form>
         </div>
     </div>
     {% endfor %}

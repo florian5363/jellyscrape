@@ -1,12 +1,16 @@
-from flask import Flask, render_template, abort, url_for, request
+from flask import Flask, render_template, abort, url_for, request, redirect, Response, stream_with_context
+import zipstream
+import requests
 import json
 from math import ceil
 from collections import defaultdict
+import mimetypes
 from download import (
     download_show_background,
     download_season_background,
     download_episode_background
 )
+import pprint
 
 app = Flask(__name__)
 
@@ -29,6 +33,23 @@ with open(DATA_FILE, "r", encoding="utf-8") as f:
 # =====================
 # Helpers
 # =====================
+
+
+def get_filename_from_cd(cd):
+    """
+    Parse Content-Disposition header to get filename
+    """
+    if not cd:
+        return None
+    fname = None
+    # Example: 'attachment; filename="video1.mp4"'
+    parts = cd.split(';')
+    for part in parts:
+        part = part.strip()
+        if part.startswith('filename='):
+            fname = part.split('=', 1)[1].strip('"')
+            # Sometimes filename* is used for encoding, handle if needed
+    return fname
 
 def is_real_media(item):
     """Filters out phantom / virtual items"""
@@ -462,12 +483,13 @@ def download_music_video(library_name, video_id):
 
     download_episode_background(video)  # or your generic download function
 
-    return render_template(
-        "download_started.html",
-        type="music video",
-        name=video["Name"],
-        back_url=url_for("library", library_name=library_name)
-    )
+    return redirect(f"{BASE_URL}/Items/{video_id}/Download?api_key={API_KEY}")
+#    return render_template(
+#        "download_started.html",
+#        type="music video",
+#        name=video["Name"],
+#        back_url=url_for("library", library_name=library_name)
+#    )
 
 
 
@@ -492,20 +514,21 @@ def download_song(library_name, song_id):
     # Call your download logic here
     # For example: download_song_file(song)
 
-    return render_template(
-        "download_started.html",
-        type="song",
-        name=song.get("Name", "Unknown"),
-        back_url=url_for("album", library_name=library_name, album_id=song.get("AlbumId"))
-    )
+
+    return redirect(f"{BASE_URL}/Items/{song_id}/Download?api_key={API_KEY}")
+#    return render_template(
+#        "download_started.html",
+#        type="song",
+#        name=song.get("Name", "Unknown"),
+#        back_url=url_for("album", library_name=library_name, album_id=song.get("AlbumId"))
+#    )
 
 
 
 @app.route("/download/book_collection/<library_name>/<collection_id>")
 def download_book_collection(library_name, collection_id):
-    # Your logic to handle downloading the book collection background/images/files
-    # ...
-    return render_template("download_started.html", ...)
+    # Your logic to handle downloading the book collection background/images/file
+    return 
 
 
 @app.route("/season/<library_name>/<season_id>")
@@ -604,69 +627,214 @@ def download_season(library_name, season_id):
     )
 
 
-@app.route("/download/episode/<library_name>/<episode_id>")
-def download_episode(library_name, episode_id):
+
+
+
+
+
+
+
+
+
+
+
+@app.route("/download/single/<library_name>/<single_id>")
+def download_single(library_name, single_id):
     library = LIBRARIES.get(library_name)
     if not library:
         abort(404)
+    return redirect(f"{BASE_URL}/Items/{single_id}/Download?api_key={API_KEY}")
 
-    items = library["Items"]
-    shows, seasons_by_show, episodes_by_season = organize_items(items)
 
-    episode = None
-    season_id = None
-    show_id = None
 
-    for sid, seasons in seasons_by_show.items():
-        for s in seasons:
-            eps = episodes_by_season.get(s["Id"], [])
-            for ep in eps:
-                if ep["Id"] == episode_id:
-                    episode = ep
-                    season_id = s["Id"]
-                    show_id = sid
-                    break
 
-    if not episode:
-        abort(404)
 
-    download_episode_background(episode)
-
-    ep_name = (
-        f"{shows[show_id]['Name']} – "
-        f"S{episode.get('ParentIndexNumber', '?')}E{episode.get('IndexNumber', '?')} "
-        f"{episode['Name']}"
-    )
-
-    return render_template(
-        "download_started.html",
-        type="episode",
-        name=ep_name,
-        back_url=url_for("season", library_name=library_name, season_id=season_id)
-    )
-
-@app.route("/download/movie/<library_name>/<movie_id>")
-def download_movie(library_name, movie_id):
-    # You need to implement this function for downloading movies
-    # Example:
+@app.route('/download_zip/<library_name>/<mul_id>')
+def download_zip(mul_id, library_name):
     library = LIBRARIES.get(library_name)
-    if not library:
+    items = library.get("Items")
+    collection_type = library.get("CollectionType")
+    id_collection = []
+    z = zipstream.ZipFile(
+        mode='w',
+        compression=zipstream.ZIP_DEFLATED,
+        allowZip64=True
+    )
+
+    if collection_type == "tvshows":
+        seasons = []
+        folder_structure = []
+        true_folder_structure = []
+
+        for i in items:
+            if mul_id == i["Id"]:
+                show_name = i["Name"]
+            if i["ParentId"] == mul_id:
+                if i["Type"] == "Season":
+                    seasons.append(i["Id"])
+                    folder_structure.append(i["Id"])
+                    true_folder_structure.append([])  # create sublist for this season
+                else:
+                    if i["LocationType"] == "FileSystem":                            id_collection.append(i["Name"])
+
+        # 2) Fill each season with its episodes
+        for idx, season_id in enumerate(seasons):
+            for i in items:
+                if i["ParentId"] == season_id and i["LocationType"] == "FileSystem":
+                    true_folder_structure[idx].append(i["Id"])
+                    id_collection.append(i["Id"])
+        
+        # Remove empty Seasons
+        true_folder_structure = list(filter(None, true_folder_structure))
+
+        for season_index, season in enumerate(true_folder_structure, start=1):
+            season_folder = f"Season {season_index}"
+
+            for episode in season:
+                episode_id = episode
+
+                url = f"{BASE_URL}/Items/{episode_id}/Download?api_key={API_KEY}"
+                resp = requests.get(url, stream=True)
+                if resp.status_code != 200:
+                    continue
+
+                # Try to get filename from Content-Disposition header
+                cd = resp.headers.get('Content-Disposition')
+                filename = get_filename_from_cd(cd)
+
+                # Fallback: guess extension from Content-Type
+                if not filename:
+                    content_type = resp.headers.get('Content-Type', '')
+                    ext = mimetypes.guess_extension(content_type.split(';')[0].strip())
+                    ext = ext if ext else ''
+                    filename = f"{episode_id}{ext}"
+
+                # Prefix with season folder
+                zip_path = f"{season_folder}/{filename}"
+
+                z.write_iter(zip_path, resp.iter_content(chunk_size=8192))
+
+        return Response(
+                stream_with_context(z),
+                mimetype='application/zip',
+                headers={'Content-Disposition': f'attachment; filename={show_name}.zip'}
+            )
+
+
+    elif collection_type == "books":
+        for i in items:
+            if i["Id"] == mul_id:
+                book_name = i["Name"]
+            if i ["ParentId"] == mul_id:
+                id_collection.append(i["Id"])
+
+        for episode_id in id_collection:
+            url = f"{BASE_URL}/Items/{episode_id}/Download?api_key={API_KEY}"
+            resp = requests.get(url, stream=True)
+            if resp.status_code != 200:
+                continue
+
+            # Try to get filename from Content-Disposition header
+            cd = resp.headers.get('Content-Disposition')
+            filename = get_filename_from_cd(cd)
+
+            # Fallback: guess extension from Content-Type
+            if not filename:
+                content_type = resp.headers.get('Content-Type', '')
+                ext = mimetypes.guess_extension(content_type.split(';')[0].strip())
+                ext = ext if ext else ''
+                filename = f"{episode_id}{ext}"
+
+            z.write_iter(filename, resp.iter_content(chunk_size=8192))
+
+        return Response(
+            stream_with_context(z),
+            mimetype='application/zip',
+            headers={'Content-Disposition': f'attachment; filename={book_name}.zip'})
+
+    elif collection_type == "music":
+        for i in items:
+            if i["Id"] == mul_id:
+                music_name = i["Name"]
+            if i["ParentId"] == mul_id:
+                id_collection.append(i["Id"])
+            
+        for episode_id in id_collection:
+            url = f"{BASE_URL}/Items/{episode_id}/Download?api_key={API_KEY}"
+            resp = requests.get(url, stream=True)
+            if resp.status_code != 200:
+                continue
+
+            # Try to get filename from Content-Disposition header
+            cd = resp.headers.get('Content-Disposition')
+            filename = get_filename_from_cd(cd)
+
+            # Fallback: guess extension from Content-Type
+            if not filename:
+                content_type = resp.headers.get('Content-Type', '')
+                ext = mimetypes.guess_extension(content_type.split(';')[0].strip())
+                ext = ext if ext else ''
+                filename = f"{episode_id}{ext}"
+
+            z.write_iter(filename, resp.iter_content(chunk_size=8192))
+
+        return Response(
+            stream_with_context(z),
+            mimetype='application/zip',
+            headers={'Content-Disposition': f'attachment; filename={music_name}.zip'})
+
+
+
+
+    elif collection_type == "musicvideos":
+        for i in items:
+            if i["Id"] == mul_id:
+                music_name = i["Name"]
+            if i ["ParentId"] == mul_id:
+                id_collection.append(i["Id"])
+
+        for episode_id in id_collection:
+            url = f"{BASE_URL}/Items/{episode_id}/Download?api_key={API_KEY}"
+            resp = requests.get(url, stream=True)
+            if resp.status_code != 200:
+                continue
+
+            # Try to get filename from Content-Disposition header
+            cd = resp.headers.get('Content-Disposition')
+            filename = get_filename_from_cd(cd)
+
+            # Fallback: guess extension from Content-Type
+            if not filename:
+                content_type = resp.headers.get('Content-Type', '')
+                ext = mimetypes.guess_extension(content_type.split(';')[0].strip())
+                ext = ext if ext else ''
+                filename = f"{episode_id}{ext}"
+
+            z.write_iter(filename, resp.iter_content(chunk_size=8192))
+
+        return Response(
+            stream_with_context(z),
+            mimetype='application/zip',
+            headers={'Content-Disposition': f'attachment; filename={music_name}.zip'})
+
+
+    else:
         abort(404)
+
+
     
-    items = library["Items"]
-    movie = next((i for i in items if i.get("Id") == movie_id and i.get("Type") == "Movie"), None)
-    if not movie:
-        abort(404)
 
-    # Call your download function here (you need to implement)
-    # download_movie_background(movie)  # for example
 
-    return render_template(
-        "download_started.html",
-        type="movie",
-        name=movie["Name"],
-        back_url=url_for("library", library_name=library_name)
-    )
+
+
+
+
+
+
+
+
+
+
 
 
 if __name__ == "__main__":
