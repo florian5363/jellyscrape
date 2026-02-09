@@ -12,6 +12,73 @@ h1 {
     margin-bottom: 20px;
 }
 
+/* ==================== SEARCHBAR STYLES ==================== */
+.search-container {
+    margin-bottom: 30px;
+    max-width: 600px;
+}
+
+.search-form {
+    display: flex;
+    gap: 10px;
+}
+
+.search-input {
+    flex: 1;
+    padding: 12px 15px;
+    border: 2px solid #333;
+    border-radius: 6px;
+    background: #1c1c1c;
+    color: #fff;
+    font-size: 16px;
+    transition: border-color 0.2s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #ff3d3d;
+}
+
+.search-btn {
+    padding: 12px 20px;
+    border-radius: 6px;
+    border: none;
+    background: #ff3d3d;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.search-btn:hover {
+    background: #ff1f1f;
+}
+
+/* Search results styling */
+.search-results {
+    margin-top: 20px;
+}
+
+.no-results {
+    text-align: center;
+    padding: 40px 20px;
+    color: #999;
+    font-size: 18px;
+}
+
+.result-type-header {
+    margin-top: 30px;
+    margin-bottom: 15px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #ff3d3d;
+    border-bottom: 2px solid #333;
+    padding-bottom: 10px;
+}
+
+/* ==================== GRID & CARDS ==================== */
+
 /* Grid container for cards */
 .grid {
     display: grid;

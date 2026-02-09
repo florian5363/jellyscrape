@@ -1,24 +1,36 @@
 from flask import Flask, render_template, abort, url_for, request, redirect, Response, stream_with_context, send_file, after_this_request
 import requests
 import json
+from pathlib import Path
 import sqlite3
 from math import ceil
 from collections import defaultdict
 import mimetypes
-from download import (
-    download_show_background,
-    download_season_background,
-    download_episode_background
-)
+from sync import init_scheduler
+
 
 app = Flask(__name__)
 
 DB_FILE = "library.db"
 ITEMS_PER_PAGE = 100
 
-with open("data.txt", "r") as file:
-    BASE_URL = file.readline().strip()
-    API_KEY = file.readline().strip()
+data_file = Path("data.txt")
+
+# Setup
+if data_file.is_file():
+    with open("data.txt", "r") as file:
+        BASE_URL = file.readline().strip()
+        API_KEY = file.readline().strip()
+else:
+    with open("data.txt", "w") as file:
+        file.write(input("Enter the Server url\n>> ")+"\n")
+        file.write(input("Enter the Api key\n>> ")+"\n")
+    with open("data.txt", "r") as file:
+        BASE_URL = file.readline().strip()
+        API_KEY = file.readline().strip()
+
+init_scheduler(app, BASE_URL, API_KEY, db_path="library.db")
+
 
 # Debug: verify credentials loaded
 print(f"Loaded BASE_URL: {BASE_URL}")
@@ -721,6 +733,125 @@ def music_video_folder(library_name, folder_id):
         total_pages=total_pages
     )
 
+# =====================
+# SEARCH FUNCTIONALITY
+# =====================
+
+@app.route('/search', methods=['GET'])
+def search():
+    """Search across all libraries for shows, movies, albums, etc."""
+    query = request.args.get('query', '').strip()
+    
+    if not query or len(query) < 2:
+        return render_template('search_results.html', query=query, shows=[], movies=[], albums=[], music_videos=[], books=[])
+    
+    search_pattern = f"%{query}%"
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # Search for TV Shows
+    cursor.execute("""
+        SELECT DISTINCT s.show_id, s.title, l.name as library_name
+        FROM shows s
+        JOIN libraries l ON s.library_id = l.id
+        WHERE s.title LIKE ?
+        LIMIT 20
+    """, (search_pattern,))
+    shows = [
+        {
+            'show_id': row['show_id'],
+            'title': row['title'],
+            'library_name': row['library_name'],
+            'image_url': f"{BASE_URL}/Items/{row['show_id']}/Images/Primary?quality=90&api_key={API_KEY}"
+        }
+        for row in cursor.fetchall()
+    ]
+    
+    # Search for Movies
+    cursor.execute("""
+        SELECT DISTINCT m.movie_id, m.title, l.name as library_name
+        FROM movies m
+        JOIN libraries l ON m.library_id = l.id
+        WHERE m.title LIKE ?
+        LIMIT 20
+    """, (search_pattern,))
+    movies = [
+        {
+            'movie_id': row['movie_id'],
+            'title': row['title'],
+            'library_name': row['library_name'],
+            'image_url': f"{BASE_URL}/Items/{row['movie_id']}/Images/Primary?quality=90&api_key={API_KEY}"
+        }
+        for row in cursor.fetchall()
+    ]
+    
+    # Search for Music Albums
+    cursor.execute("""
+        SELECT DISTINCT ma.album_id, ma.title, l.name as library_name
+        FROM music_albums ma
+        JOIN libraries l ON ma.library_id = l.id
+        WHERE ma.title LIKE ?
+        LIMIT 20
+    """, (search_pattern,))
+    albums = [
+        {
+            'album_id': row['album_id'],
+            'title': row['title'],
+            'library_name': row['library_name'],
+            'image_url': f"{BASE_URL}/Items/{row['album_id']}/Images/Primary?quality=90&api_key={API_KEY}"
+        }
+        for row in cursor.fetchall()
+    ]
+    
+    # Search for Music Videos (join through folders)
+    cursor.execute("""
+        SELECT DISTINCT mv.video_id, mv.title, l.name as library_name
+        FROM music_videos mv
+        JOIN music_video_folders mvf ON mv.folder_id = mvf.id
+        JOIN libraries l ON mvf.library_id = l.id
+        WHERE mv.title LIKE ?
+        LIMIT 20
+    """, (search_pattern,))
+    music_videos = [
+        {
+            'video_id': row['video_id'],
+            'title': row['title'],
+            'library_name': row['library_name'],
+            'image_url': f"{BASE_URL}/Items/{row['video_id']}/Images/Primary?quality=90&api_key={API_KEY}"
+        }
+        for row in cursor.fetchall()
+    ]
+    
+    # Search for Books (join through collections)
+    cursor.execute("""
+        SELECT DISTINCT b.book_id, b.title, l.name as library_name
+        FROM books b
+        JOIN book_collections bc ON b.collection_id = bc.id
+        JOIN libraries l ON bc.library_id = l.id
+        WHERE b.title LIKE ?
+        LIMIT 20
+    """, (search_pattern,))
+    books = [
+        {
+            'book_id': row['book_id'],
+            'title': row['title'],
+            'library_name': row['library_name'],
+            'image_url': f"{BASE_URL}/Items/{row['book_id']}/Images/Primary?quality=90&api_key={API_KEY}"
+        }
+        for row in cursor.fetchall()
+    ]
+    
+    conn.close()
+    
+    return render_template(
+        'search_results.html',
+        query=query,
+        shows=shows,
+        movies=movies,
+        albums=albums,
+        music_videos=music_videos,
+        books=books
+    )
 
 # =====================
 # Download Routes
@@ -1614,4 +1745,4 @@ def get_filename_from_cd(cd):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0")

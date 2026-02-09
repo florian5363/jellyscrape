@@ -2,28 +2,168 @@
 <html>
 <head>
     <title>{{ library_name }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        /* ==================== SEARCHBAR STYLES ==================== */
+        .search-container {
+            margin-bottom: 30px;
+            max-width: 600px;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #333;
+            border-radius: 6px;
+            background: #1c1c1c;
+            color: #fff;
+            font-size: 16px;
+            transition: border-color 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #ff3d3d;
+        }
+
+        .search-btn {
+            padding: 12px 20px;
+            border-radius: 6px;
+            border: none;
+            background: #ff3d3d;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .search-btn:hover {
+            background: #ff1f1f;
+        }
+
+        /* ==================== GRID & CARDS ==================== */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: #1c1c1c;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+            transition: transform 0.15s ease;
+        }
+
+        .card:hover {
+            transform: scale(1.03);
+        }
+
+        .card img {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            background: #333;
+            display: block;
+        }
+
+        .card-body {
+            padding: 10px;
+            text-align: center;
+        }
+
+        .title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding: 10px 0;
+            text-align: center;
+        }
+
+        .btn {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            background: #ff3d3d;
+            color: white;
+            font-size: 13px;
+            transition: background-color 0.15s ease;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: #ff1f1f;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .back-link {
+            margin-top: 20px;
+            display: inline-block;
+            color: #ff3d3d;
+            font-weight: bold;
+        }
+    </style>
 </head>
 
 <body>
+
+<!-- Searchbar -->
+<div class="search-container">
+    <form class="search-form" action="{{ url_for('search') }}" method="get">
+        <input 
+            type="text" 
+            class="search-input" 
+            name="query" 
+            placeholder="Search shows, movies, albums..." 
+            required
+        >
+        <button type="submit" class="search-btn">Search</button>
+    </form>
+</div>
+
 <h1>{{ library_name }}</h1>
 
 <div class="grid">
 {% for movie in movies %}
 <div class="card">
-           <img src="{{ movie.get('ImageUrl') }}"> 
+    <img src="{{ movie['ImageUrl'] }}" alt="{{ movie['Name'] }}"> 
     <div class="card-body">
-        <div>{{ movie['Name'] }}</div>
+        <div class="title">{{ movie['Name'] }}</div>
         <br>
-        <form action="{{ url_for('download_single', library_name=library_name, single_id=movie['Id']) }}">
-            <button class="btn">Download</button>
+        <form action="{{ url_for('download_single', library_name=library_name, single_id=movie['Id']) }}" method="get">
+            <button class="btn" type="submit">Download</button>
         </form>
     </div>
-
 </div>
 {% endfor %}
 </div>
 
-<a href="{{ url_for('libraries') }}">← Back</a>
+<a href="{{ url_for('libraries') }}" class="back-link">← Back</a>
 </body>
 </html>

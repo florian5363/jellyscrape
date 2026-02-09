@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+<head>
+    <title>Search Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<!-- Searchbar -->
+<div class="search-container">
+    <form class="search-form" action="{{ url_for('search') }}" method="get">
+        <input 
+            type="text" 
+            class="search-input" 
+            name="query" 
+            placeholder="Search shows, movies, albums..." 
+            value="{{ query }}"
+            required
+        >
+        <button type="submit" class="search-btn">Search</button>
+    </form>
+</div>
+
+<h1>Search Results for "{{ query }}"</h1>
+
+<div class="search-results">
+
+    <!-- TV Shows Results -->
+    {% if shows %}
+        <div class="result-type-header">📺 TV Shows</div>
+        <div class="grid">
+            {% for show in shows %}
+            <div class="card">
+                <a href="{{ url_for('show', library_name=show.library_name, show_id=show.show_id) }}">
+                    <img src="{{ show.image_url or '' }}" alt="{{ show.title }}">
+                    <div class="card-body">
+                        <div class="title">{{ show.title }}</div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Movies Results -->
+    {% if movies %}
+        <div class="result-type-header">🎬 Movies</div>
+        <div class="grid">
+            {% for movie in movies %}
+            <div class="card">
+                <a href="{{ url_for('download_single', library_name=movie.library_name, single_id=movie.movie_id) }}">
+                    <img src="{{ movie.image_url or '' }}" alt="{{ movie.title }}">
+                    <div class="card-body">
+                        <div class="title">{{ movie.title }}</div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Music Albums Results -->
+    {% if albums %}
+        <div class="result-type-header">🎵 Music Albums</div>
+        <div class="grid">
+            {% for album in albums %}
+            <div class="card">
+                <a href="{{ url_for('album', library_name=album.library_name, album_id=album.album_id) }}">
+                    {% if album.image_url %}
+                        <img src="{{ album.image_url }}" alt="{{ album.title }}">
+                    {% else %}
+                        <div style="height: 280px; background: #333; display: flex; align-items: center; justify-content: center; font-size: 3rem;">
+                            🎵
+                        </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <div class="title">{{ album.title }}</div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Music Videos Results -->
+    {% if music_videos %}
+        <div class="result-type-header">🎬 Music Videos</div>
+        <div class="grid">
+            {% for video in music_videos %}
+            <div class="card">
+                <a href="{{ url_for('download_single', library_name=video.library_name, single_id=video.video_id) }}">
+                    {% if video.image_url %}
+                        <img src="{{ video.image_url }}" alt="{{ video.title }}">
+                    {% else %}
+                        <div style="height: 280px; background: #333; display: flex; align-items: center; justify-content: center; font-size: 3rem;">
+                            🎬
+                        </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <div class="title">{{ video.title }}</div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Books Results -->
+    {% if books %}
+        <div class="result-type-header">📚 Books</div>
+        <div class="grid">
+            {% for book in books %}
+            <div class="card">
+                <a href="{{ url_for('download_single', library_name=book.library_name, single_id=book.book_id) }}">
+                    {% if book.image_url %}
+                        <img src="{{ book.image_url }}" alt="{{ book.title }}">
+                    {% else %}
+                        <div style="height: 280px; background: #333; display: flex; align-items: center; justify-content: center; font-size: 3rem;">
+                            📚
+                        </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <div class="title">{{ book.title }}</div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- No results message -->
+    {% if not shows and not movies and not albums and not music_videos and not books %}
+        <div class="no-results">
+            <p>No results found for "{{ query }}"</p>
+            <p style="color: #666; font-size: 14px;">Try a different search term</p>
+        </div>
+    {% endif %}
+
+</div>
+
+<br>
+<a href="{{ url_for('libraries') }}" class="back-link">← Back to libraries</a>
+
+</body>
+</html>

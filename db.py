@@ -539,10 +539,10 @@ if __name__ == "__main__":
     # Initialize the database (set force_recreate=True to start fresh)
     init_db(force_recreate=True)
     
-    # Configure your Jellyfin connection
-    JELLYFIN_URL = ""  # Change to your Jellyfin server URL
-    API_KEY = ""  # Change to your API key
-    
+    with open("data.txt", "r") as file:
+        JELLYFIN_URL = file.readline().strip()
+        API_KEY = file.readline().strip()
+
     # Fetch and populate data
     # Set include_specials=True if you want to include Season 0 (specials)
     fetch_jellyfin_data(JELLYFIN_URL, API_KEY, include_specials=False)
